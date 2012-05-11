@@ -1,0 +1,173 @@
+WARNING: I wrote this in 2004. There shouldn't be anything wrong with the code,
+but I haven't updated it at all. And when you're reading this, please remember it
+was written by a 17-year-old who drank coffee by the pot.
+
+Roombox 0.9.0: Modular Audio Player
+-----------------------------------
+
+Roombox is an audio player developed with the Ruby programming language. It
+features a modular design and a distributed client-server model, using DRb.
+This package includes both client and server code, along with a number of
+plugins for input, output, and notification.
+
+DEVELOPMENT STATUS
+
+Roombox is in an alpha state, but it's usable enough that I use it as my primary
+audio player. Your mileage, of course, may vary.
+I don't do nearly enough error checking or exception catching or documentation.
+All of that will come before I dub any release 1.0.0.
+
+INSTALLATION
+
+Very easy.
+
+# ruby install.rb system [bindir] [libdir]
+or
+$ ruby install.rb user bindir libdir
+
+For system-wide installation, bindir defaults to /usr/local/bin, and libdir
+defaults to Ruby's sitelibdir (something like /usr/lib/ruby/1.8/site-ruby).
+
+INSTALLED FILES
+
+In bindir:
+- roombox (server)
+- roomboxctl (client)
+
+In libdir:
+- roombox/... (libraries)
+
+FEATURES
+
+Roombox currently includes the following:
+* Server (roombox)
+* Input plugins for a couple formats. Most require third-party libraries (see
+  REQUIREMENTS)
+ - VorbisInput: reads Ogg Vorbis audio files.
+ - Mpg123Input: reads MPEG Layer 3 audio files (with the program mpg123).
+* Output plugins
+ - AoOutput: output using the libao audio output library.
+ - AplayOutput: output using the 'aplay' command or any other command that
+   accepts raw audio data on standard input.
+* Notifier plugins
+ - XosdOutput: displays messages using the X On-Screen Display library.
+* Basic playlist manipulation: add, sort, next, previous, pause, resume.
+* Clients:
+ - client-irb.rb: very raw client. Literally just opens up an IRB session.
+ - roomboxctl: command line client that supports most, if not all, operations.
+
+UNFEATURES
+
+Roombox doesn't yet include the following. Yeah, it's a long list.
+* Filter plugins: supported, but none written.
+* Some input plugins I'd like to see: FLAC, SHN, etc.
+* MP3 decoding without an external program.
+* Several playlist operations: remove, save, load, shuffle, repeat.
+* Sorting on any other attribute than filename.
+* Playlist preloading. Playlists in general are quite primitive -- for now.
+* Loading other info than album, title, and artist.
+* Seeking within a file.
+* Streaming audio.
+* A GUI client.
+* Configuration other than messing with the source.
+
+Roombox will likely never include the following:
+* A volume control or mixer. Clients may implement one, but there are many ways
+  to adjust your mixer in just about any OS, and I don't want to duplicate them.
+
+MISFEATURES
+
+There are still a few unfortunate things about Roombox.
+* It's slow. Well, the operation isn't slow, but the server-client model adds
+  some overhead to commands. It takes a bit less than a second to pause or change
+  songs.
+* It doesn't do much yet. See UNFEATURES.
+
+BASIC USE
+
+$ roombox                        # Will fork off
+$ roomboxctl add blah.ogg        # Add single file
+$ roomboxctl add 'music/*.mp3'   # Add a glob -- NOTE THE SINGLE QUOTES
+$ roomboxctl play                # Starts playing at first item
+$ roomboxctl next                # Skips forward one song
+$ roomboxctl prev                # Skips back one song
+$ roomboxctl jump 10             # Jumps to the 10th song, if it exists
+$ roomboxctl goto "Diamond Dogs" # Goes to first song with the string in its name
+$ roomboxctl sort-ascending      # Sorts the playlist in ascending order
+$ roomboxctl sort-descending     # Sorts the playlist in descending order
+$ roomboxctl current             # Prints current position in playlist
+$ roomboxctl filename            # Prints the file currently playing
+$ roomboxctl see-next            # Prints the next filename in the playlist
+$ roomboxctl see-prev            # Prints the previous filename in the playlist
+$ roomboxctl find "Cold Brains"  # Prints the position in the playlist of the
+                                 # file with that string in its name
+$ roomboxctl version             # Prints roombox version, 'roombox M.m.r'
+$ roomboxctl status              # Prints roombox status, 'stopped', 'paused',
+                                 # or 'playing'
+$ roomboxctl pause               # Pauses output
+$ roomboxctl unpause             # Restarts output
+$ roomboxctl stop                # Stops play entirely
+$ roomboxctl stfu                # Prevents the roombox server from writing to
+                                 # stdout or stderr.
+$ roomboxctl quit                # Closes roombox
+$ roomboxctl kill                # If it just won't go away. ;-)
+
+
+COMPATIBILITY
+
+I run Roombox with Ruby 1.8.2 on GNU/Linux, using ALSA for audio. I personally
+use the AoOutput plugin. If you have successes or failures on other platforms,
+please do tell me.
+
+REQUIREMENTS
+
+Using third-party libraries is good for everyone. It reduces time of development,
+helps improve currently existing libraries, and is generally good practice.
+It literally took me less than a day to get to the operational point Roombox is
+at, and I feel like I barely did any work. Of course, dependencies can be annoying.
+
+Roombox depends on the presence of the Ruby interpreter, of course.
+Plugins have individual requirements that they will check for on load. Some of the
+libraries mentioned here may have their own requirements.
+- AoOutput: requires Ruby-AudioOutput <http://rikkus.info/ruby_audiooutput.html>.
+- AplayOutput: requires ALSA's aplay or any other program that takes raw audio.
+- VorbisInput: requires Ruby-VorbisFile <http://rikkus.info/ruby_vorbisfile.html>.
+  Ruby-VorbisFile 0.2 has a fatal bug when trying to load comments; if you're using
+  that version (which is the latest as of this writing), you'll need a small patch
+  included as rbf-comment-fix.patch.
+- Mpg123Input: requires mpg123 <http://www.mpg123.de/>. mp3taglib
+               <http://rubyforge.org/projects/mp3taglib/> is optional for metadata
+               loading.
+- XosdNotifier: requires ruby-xosd >=1.1.0 <http://djur.desperance.net/ruby/> and a
+                running osd_buf_server instance.
+
+DOCUMENTATION
+
+See BASIC USE above, mostly. I'm working on a spec for clients right now.
+
+CREDITS
+
+The author of this application is Matt 'djur' Boeh <mboeh@desperance.net>. I am
+a student, a webmaster, and a Ruby enthusiast, and a world-class lover, and also
+a doctor, lawyer, and nuclear physicist... er, sorry, daydreaming again.
+
+I wrote Roombox because it was fun, because I like Ruby, and because I've always
+had little personal issues with certain aspects of most media players. If you
+like it, use it, or have some sort of advice, please email me.
+
+New releases, information, etc. can be found at Roombox's website, located at
+<http://djur.desperance.net/ruby/roombox>. My other Ruby stuff can be found,
+logically, at <http://djur.desperance.net/ruby>.
+
+Special thanks go to Rik Hemsley <http://rikkus.info>; without his work on
+Ruby-VorbisFile and Ruby-AudioOutput, I likely would not have had the patience
+to make this work.
+
+The very helpful mp3tag binding was written by Guillaume Pierronnet. Thanks.
+
+Boy, I'm sure navel-gazing with this README, aren't I? :-p
+
+Finally, thanks to matz for a language that makes code feel more like play than
+work. There's no language quite like it.
+
+DNE EHT.

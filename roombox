@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+
+CONFIG_DIR = File::join(ENV['HOME'], ".roombox")
+#CONFIG_FILE = File::join($config_dir, "config")  # No reason to lie.
+PID_FILE = File::join(CONFIG_DIR, "pid")
+PORT = "9900"
+PORT_FILE = File::join(CONFIG_DIR, "port")
+
+def main
+  require 'roombox/player'
+  require 'drb'
+   
+  def setup
+    if not test(?d, CONFIG_DIR) then
+      Dir::mkdir(CONFIG_DIR)
+    end
+    File.open(PID_FILE, "w") do |file|
+      file.write(Process::pid)
+    end
+    File.open(PORT_FILE, "w") do |file|
+      file.write(PORT)
+    end
+  end
+ 
+  player = Roombox::Player.new
+
+  begin
+    require 'roombox/vorbis-input'
+    player.inputs << Roombox::VorbisInput.new
+  rescue => err
+    $stderr << err.to_s
+  end
+  
+  begin
+    require 'roombox/mpg123-input'
+    player.inputs << Roombox::Mpg123Input.new
+  rescue => err
+    $stderr << err.to_s
+  end
+ 
+  begin
+    require 'roombox/aplay-output'
+    player.outputs << Roombox::AplayOutput.new
+  rescue => err
+    $stderr << err.to_s
+  end
+  
+  begin
+    require 'roombox/ao-output'
+    player.outputs << Roombox::AoOutput.new
+  rescue => err
+    $stderr << err.to_s
+  end
+  
+  begin
+    require 'roombox/xosd-notify'
+    player.notifiers << Roombox::XosdNotifier.new
+  rescue => err
+    $stderr << err.to_s
+  end
+  
+  player.select_output(ARGV[0] || 'ao')
+
+  DRb.start_service("druby://localhost:#{PORT}", player)
+  setup
+  $SAFE = 1
+  DRb.thread.join
+end
+
+if $0 =~ /nofork/ then
+  main
+else
+  fork do main end
+end

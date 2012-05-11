@@ -1,0 +1,41 @@
+diff -cr ruby-vorbisfile-0.2/vorbisfile.c ruby-vorbisfile-0.2-fix/vorbisfile.c
+*** ruby-vorbisfile-0.2/vorbisfile.c	Sun Dec  2 13:52:02 2001
+--- ruby-vorbisfile-0.2-fix/vorbisfile.c	Mon Dec 13 09:26:30 2004
+***************
+*** 365,372 ****
+  
+    Data_Get_Struct(obj, OggVorbis_File, vf);
+  
+!   ptr = ov_comment(vf, NUM2INT(link))->user_comments;
+! 
+    while (0 != *ptr)
+    {
+      char * s = *ptr;
+--- 365,374 ----
+  
+    Data_Get_Struct(obj, OggVorbis_File, vf);
+  
+!   vc = ov_comment(vf, NUM2INT(link));
+!   if(!vc)
+!     return hash;
+!   ptr = vc->user_comments;
+    while (0 != *ptr)
+    {
+      char * s = *ptr;
+***************
+*** 391,397 ****
+  
+        rb_hash_aset(hash, key, value);
+      }
+! 
+      ++ptr;
+    }
+  
+--- 393,399 ----
+  
+        rb_hash_aset(hash, key, value);
+      }
+!   
+      ++ptr;
+    }
+  

@@ -1,0 +1,120 @@
+#!/usr/bin/env ruby
+
+require 'drb'
+
+CONFIG_DIR = File::join(ENV['HOME'], ".roombox")
+#CONFIG_FILE = File::join($config_dir, "config")  # No reason to lie.
+PID_FILE = File::join(CONFIG_DIR, "pid")
+PORT_FILE = File::join(CONFIG_DIR, "port")
+
+module Roombox
+
+  class Client
+    def Client.new
+      port = File.open(PORT_FILE).read
+      DRb.start_service
+      DRbObject.new(nil, "druby://localhost:#{port}")
+    end
+  end
+end
+
+def usage(message = nil)
+  if message then
+    $stderr.puts(message)
+  end
+  $stderr.puts <<-"EOM"
+usage: #$0 command [args...]
+See README for commands.
+  EOM
+  exit
+end
+
+$player = Roombox::Client.new
+
+if ARGV.length > 0 then
+  while cmd = ARGV.shift do
+    case cmd
+    when 'play'
+      $player.play
+    when 'pause'
+      $player.pause
+    when 'unpause'
+      $player.unpause
+    when 'stop'
+      $player.stop
+    when 'next'
+      $player.next
+    when 'prev'
+      $player.prev
+    when 'jump'
+      to = ARGV.shift
+      if to then
+        $stderr.puts("jumping to #{to.to_i}")
+        $player.jump(to.to_i)
+      else
+        usage("jump needs a number argument")
+      end
+    when 'goto'
+      to = ARGV.shift
+      if to then
+        if n = $player.index_of_file(to) then
+          $player.jump(n)
+        else
+          $stderr.puts("Couldn't match #{to}!")
+        end
+      else
+        usage("goto needs a string to search for")
+      end
+    when 'add'
+      glob = ARGV.shift
+      if glob then
+        $player.queue(glob)
+      else
+        usage("add needs to be passed a filename or glob")
+      end
+    when 'current'
+      puts $player.current_index
+    when 'filename'
+      puts $player.current_file
+    when 'see-next'
+      puts $player.next_file
+    when 'see-prev'
+      puts $player.prev_file
+    when 'find'
+      file = ARGV.shift
+      if file then
+        puts $player.index_of_file(file)
+      else
+        usage("find needs to be passed a string to search on")
+      end
+    when 'version'
+      puts $player.version
+    when 'status'
+      puts $player.status
+    when 'sort-ascending'
+      $player.sort(nil, true)
+    when 'sort-descending'
+      $player.sort(nil, false)
+    when 'list'
+      list = $player.playlist
+      list.each do |file|
+        puts file
+      end
+    when 'quit'
+      begin
+        $player.shutdown
+      rescue
+
+      end
+    when 'kill'
+      pid = File.open(PID_FILE).read.to_i
+      Process::kill('QUIT', pid)
+    when 'stfu'
+      $player.shut_up
+    else
+      usage
+    end
+  end
+else
+  usage
+end
